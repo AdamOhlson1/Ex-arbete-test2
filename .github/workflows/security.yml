@@ -1,0 +1,54 @@
+name: Security Testing
+
+on: [push, pull_request]
+
+jobs:
+  security:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+
+      # Scan for vulnerabilities in dependencies
+      - name: Run Snyk to check for vulnerabilities
+        uses: snyk/actions/node@master
+        env:
+          SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
+
+      # Run OWASP ZAP scan (works for any web application)
+      - name: OWASP ZAP Full Scan
+        uses: zaproxy/action-full-scan@v0.7.0
+        with:
+          target: ${{ secrets.APP_URL }} # User just needs to set their app URL
+
+      # Run Lighthouse security audit
+      - name: Lighthouse Check
+        uses: foo-software/lighthouse-check-action@master
+        with:
+          urls: ${{ secrets.APP_URL }}
+
+      # SonarCloud Analysis (works with many languages)
+      - name: SonarCloud Scan
+        uses: SonarSource/sonarcloud-github-action@master
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+
+      # Generate Security Report
+      - name: Create Security Report
+        if: always()
+        uses: actions/upload-artifact@v3
+        with:
+          name: security-report
+          path: |
+            ./*zap*
+            ./lighthouse-report
+            ./snyk-report
+
+      # Optional: Fail if critical vulnerabilities found
+      - name: Check for Critical Issues
+        if: always()
+        run: |
+          if grep -q "Critical" ./security-report/*; then
+            echo "Critical security issues found!"
+            exit 1
+          fi

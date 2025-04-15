@@ -1,0 +1,51 @@
+# Dependencies
+node_modules/
+.pnp/
+.pnp.js
+
+# Next.js
+.next/
+out/
+
+# Production
+build/
+dist/
+
+# Debug
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Local env files
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# VS Code
+.vscode/
+
+# Visual Studio
+.vs/
+bin/
+obj/
+*.user
+*.suo
+*.cache
+
+# Testing
+coverage/
+
+# System Files
+.DS_Store
+Thumbs.db
+
+# Package Files
+*.nupkg
+*.nupkg.sha512
+*.snupkg
+*.snupkg.sha512
+*.nupkg.sha512.sig
+*.snupkg.sha512.sig
+*.nupkg.sha512.sig.asc
