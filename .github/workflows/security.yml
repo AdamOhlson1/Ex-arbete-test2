@@ -8,25 +8,38 @@ jobs:
     steps:
       - uses: actions/checkout@v3
 
-      # Scan for vulnerabilities in dependencies
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: "18"
+
+      - name: Install Dependencies
+        run: |
+          cd ex-arbete
+          npm install
+
+      - name: Build Next.js
+        run: |
+          cd ex-arbete
+          npm run build
+
+      - name: Start Next.js (Background)
+        run: |
+          cd ex-arbete
+          npm run start &
+          sleep 10 # Give the server time to start
+
+      # Now run security tests
       - name: Run Snyk to check for vulnerabilities
         uses: snyk/actions/node@master
         env:
           SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
 
-      # Run OWASP ZAP scan (works for any web application)
       - name: OWASP ZAP Full Scan
         uses: zaproxy/action-full-scan@v0.7.0
         with:
-          target: ${{ secrets.APP_URL }} # User just needs to set their app URL
+          target: "http://localhost:3000"
 
-      # Run Lighthouse security audit
-      - name: Lighthouse Check
-        uses: foo-software/lighthouse-check-action@master
-        with:
-          urls: ${{ secrets.APP_URL }}
-
-      # SonarCloud Analysis (works with many languages)
       - name: SonarCloud Scan
         uses: SonarSource/sonarcloud-github-action@master
         env:
@@ -41,7 +54,6 @@ jobs:
           name: security-report
           path: |
             ./*zap*
-            ./lighthouse-report
             ./snyk-report
 
       # Optional: Fail if critical vulnerabilities found
