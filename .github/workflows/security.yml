@@ -19,7 +19,6 @@ jobs:
         uses: zaproxy/action-baseline@v0.9.0
         with:
           target: "https://www.example.com"
-          cmd_options: "-J zap-report.json"
           allow_issue_writing: false
         continue-on-error: true
 
@@ -28,12 +27,25 @@ jobs:
         run: |
           echo "# Security Scan Results" >> $GITHUB_STEP_SUMMARY
           echo "## OWASP ZAP Scan Results" >> $GITHUB_STEP_SUMMARY
-          echo "### Passed Checks ✅" >> $GITHUB_STEP_SUMMARY
-          cat /zap/wrk/report_md.md >> $GITHUB_STEP_SUMMARY
-          echo "### Detailed Results" >> $GITHUB_STEP_SUMMARY
-          echo "\`\`\`" >> $GITHUB_STEP_SUMMARY
-          cat /zap/wrk/report_json.json >> $GITHUB_STEP_SUMMARY
-          echo "\`\`\`" >> $GITHUB_STEP_SUMMARY
+          echo "### Security Findings" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+
+          # Display all PASS results
+          echo "#### ✅ Passed Security Checks" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          find . -type f -name "*.txt" -exec grep "PASS:" {} \; | sed 's/PASS: /- /' >> $GITHUB_STEP_SUMMARY
+
+          # Display all WARNING results
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "#### ⚠️ Security Warnings" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          find . -type f -name "*.txt" -exec grep "WARN-NEW:" {} \; | sed 's/WARN-NEW: /- /' >> $GITHUB_STEP_SUMMARY
+
+          # Display all FAIL results
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "#### ❌ Security Failures" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          find . -type f -name "*.txt" -exec grep "FAIL-NEW:" {} \; | sed 's/FAIL-NEW: /- /' >> $GITHUB_STEP_SUMMARY
 
       # SonarCloud Analysis (static code analysis)
       - name: SonarCloud Scan
@@ -48,4 +60,6 @@ jobs:
         with:
           name: security-reports
           path: |
-            /zap/wrk/report*.*
+            ./*.txt
+            ./*.html
+            ./*.json
