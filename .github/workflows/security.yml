@@ -18,7 +18,21 @@ jobs:
       - name: OWASP ZAP Baseline Scan
         uses: zaproxy/action-baseline@v0.9.0
         with:
-          target: "https://www.example.com" # This is just a placeholder, ZAP will still check your code
+          target: "https://www.example.com"
+          cmd_options: "-J zap-report.json"
+          allow_issue_writing: false
+
+      - name: Create Summary
+        if: always()
+        run: |
+          echo "# Security Scan Results" >> $GITHUB_STEP_SUMMARY
+          echo "## OWASP ZAP Scan Results" >> $GITHUB_STEP_SUMMARY
+          echo "### Passed Checks ✅" >> $GITHUB_STEP_SUMMARY
+          grep "PASS:" zap-report.txt | sed 's/PASS: /- /' >> $GITHUB_STEP_SUMMARY
+          echo "### Warnings ⚠️" >> $GITHUB_STEP_SUMMARY
+          grep "WARN-NEW:" zap-report.txt | sed 's/WARN-NEW: /- /' >> $GITHUB_STEP_SUMMARY
+          echo "### Failures ❌" >> $GITHUB_STEP_SUMMARY
+          grep "FAIL-NEW:" zap-report.txt | sed 's/FAIL-NEW: /- /' >> $GITHUB_STEP_SUMMARY
 
       # SonarCloud Analysis (static code analysis)
       - name: SonarCloud Scan
@@ -27,11 +41,11 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
 
-      - name: Create Security Report
+      - name: Upload Reports
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: security-report
+          name: security-reports
           path: |
-            ./*zap*
+            zap-report.*
             ./snyk-report
