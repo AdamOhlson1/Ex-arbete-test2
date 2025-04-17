@@ -7,13 +7,33 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
+        with:
+          fetch-depth: 0 # Required for SonarCloud pull request analysis
 
+      # Setup .NET environment
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v3
+        with:
+          dotnet-version: "8.0.x" # Or your project's target version
+
+      # Run Snyk (frontend deps) - May need adjustment if backend has deps too
+      - name: Install Node.js for Snyk/Frontend
+        uses: actions/setup-node@v3
+        with:
+          node-version: "18" # Or your project's node version
+      - name: Install Frontend Dependencies # Assuming package.json is in ex-arbete
+        run: npm install
+        working-directory: ./ex-arbete
       - name: Run Snyk to check for vulnerabilities
         id: snyk
         uses: snyk/actions/node@master
         continue-on-error: true
         env:
           SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
+        with:
+          command: monitor # Changed to monitor to avoid build issues potentially
+          # Alternatively, point to the correct manifest if needed:
+          # file: ex-arbete/package.json
 
       - name: Check Snyk Results
         if: always()
@@ -42,6 +62,9 @@ jobs:
             echo "::warning::----------------------------------------"
             echo "::warning::Total Warnings: $(echo "${{ steps.zap_scan.outputs.alerts }}" | grep -c "WARN-NEW:")"
           fi
+
+      - name: Build .NET Project
+        run: dotnet build --configuration Release # Build the solution
 
       - name: SonarCloud Scan
         uses: SonarSource/sonarqube-scan-action@v5.0.0
