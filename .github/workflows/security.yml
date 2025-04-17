@@ -14,32 +14,61 @@ jobs:
       - name: Setup .NET
         uses: actions/setup-dotnet@v3
         with:
-          dotnet-version: "8.0.x" # Or your project's target version
+          dotnet-version: "8.0.x"
 
-      # Run Snyk (frontend deps) - May need adjustment if backend has deps too
-      - name: Install Node.js for Snyk/Frontend
+      # Setup Node.js
+      - name: Install Node.js
         uses: actions/setup-node@v3
         with:
-          node-version: "18" # Or your project's node version
-      - name: Install Frontend Dependencies # Assuming package.json is in ex-arbete
+          node-version: "18"
+
+      # Install Frontend Dependencies
+      - name: Install Frontend Dependencies
         run: npm install
         working-directory: ./ex-arbete
-      - name: Run Snyk to check for vulnerabilities
-        id: snyk
+
+      # Frontend Scan
+      - name: Snyk Frontend Scan
+        id: snyk_frontend
         uses: snyk/actions/node@master
         continue-on-error: true
         env:
           SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
         with:
-          command: monitor # Changed to monitor to avoid build issues potentially
-          # Alternatively, point to the correct manifest if needed:
-          # file: ex-arbete/package.json
+          command: test
+          json: true
+          working-directory: ./ex-arbete
 
+      # Backend Scan
+      - name: Snyk Backend Scan
+        id: snyk_backend
+        uses: snyk/actions/dotnet@master
+        continue-on-error: true
+        env:
+          SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
+        with:
+          command: test
+          json: true
+
+      # Check Snyk Results
       - name: Check Snyk Results
         if: always()
         run: |
-          if [[ "${{ steps.snyk.outcome }}" == "failure" ]]; then
-            echo "::warning::⚠️ SNYK SECURITY VULNERABILITIES FOUND ⚠️"
+          echo "# Snyk Security Findings" >> $GITHUB_STEP_SUMMARY
+          echo "## Frontend Scan" >> $GITHUB_STEP_SUMMARY
+          if [[ "${{ steps.snyk_frontend.outcome }}" == "failure" ]]; then
+            echo "⚠️ Vulnerabilities found in frontend dependencies" >> $GITHUB_STEP_SUMMARY
+            echo "${{ steps.snyk_frontend.outputs.snyk-test-output }}" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "✅ No vulnerabilities found in frontend dependencies" >> $GITHUB_STEP_SUMMARY
+          fi
+
+          echo "## Backend Scan" >> $GITHUB_STEP_SUMMARY
+          if [[ "${{ steps.snyk_backend.outcome }}" == "failure" ]]; then
+            echo "⚠️ Vulnerabilities found in backend dependencies" >> $GITHUB_STEP_SUMMARY
+            echo "${{ steps.snyk_backend.outputs.snyk-test-output }}" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "✅ No vulnerabilities found in backend dependencies" >> $GITHUB_STEP_SUMMARY
           fi
 
       - name: OWASP ZAP Baseline Scan
@@ -64,7 +93,7 @@ jobs:
           fi
 
       - name: Build .NET Project
-        run: dotnet build --configuration Release # Build the solution
+        run: dotnet build --configuration Release
 
       - name: SonarCloud Scan
         uses: SonarSource/sonarqube-scan-action@v5.0.0
