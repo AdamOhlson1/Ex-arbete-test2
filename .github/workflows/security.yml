@@ -31,7 +31,11 @@ jobs:
           dotnet restore
           dotnet build --configuration Release --no-restore
 
-      # Security Scans
+      # Install Snyk CLI globally
+      - name: Install Snyk CLI
+        run: npm install -g snyk
+
+      # Run Snyk scans
       - name: Snyk Frontend Scan
         id: snyk_frontend
         uses: snyk/actions/node@master
