@@ -49,12 +49,14 @@ jobs:
 
       - name: Snyk Backend Scan
         id: snyk_backend
-        run: |
-          dotnet restore
-          snyk test --package-manager=nuget --json > snyk-backend-results.json || true
+        uses: snyk/actions/dotnet@master
         continue-on-error: true
         env:
           SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
+        with:
+          command: test
+          json: true
+          args: --file=Examensarbete.csproj
 
       # Results Check
       - name: Check Snyk Results
@@ -73,15 +75,11 @@ jobs:
 
           # Backend Results
           echo "## Backend Scan" >> $GITHUB_STEP_SUMMARY
-          if [ -f "snyk-backend-results.json" ]; then
-            if grep -q "vulnerabilities" snyk-backend-results.json; then
-              echo "⚠️ Vulnerabilities found in backend dependencies" >> $GITHUB_STEP_SUMMARY
-              cat snyk-backend-results.json >> $GITHUB_STEP_SUMMARY
-            else
-              echo "✅ No vulnerabilities found in backend dependencies" >> $GITHUB_STEP_SUMMARY
-            fi
+          if [[ "${{ steps.snyk_backend.outcome }}" == "failure" ]]; then
+            echo "⚠️ Vulnerabilities found in backend dependencies" >> $GITHUB_STEP_SUMMARY
+            echo "${{ steps.snyk_backend.outputs.snyk-test-output }}" >> $GITHUB_STEP_SUMMARY
           else
-            echo "❌ Backend scan results not found" >> $GITHUB_STEP_SUMMARY
+            echo "✅ No vulnerabilities found in backend dependencies" >> $GITHUB_STEP_SUMMARY
           fi
 
       - name: OWASP ZAP Baseline Scan
