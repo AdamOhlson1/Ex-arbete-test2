@@ -37,7 +37,7 @@ jobs:
         with:
           command: test
           json: true
-          working-directory: ./ex-arbete
+          args: --file=ex-arbete/package.json
 
       # Backend Scan
       - name: Snyk Backend Scan
@@ -49,6 +49,7 @@ jobs:
         with:
           command: test
           json: true
+          args: --file=Examensarbete.csproj
 
       # Check Snyk Results
       - name: Check Snyk Results
