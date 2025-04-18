@@ -56,31 +56,31 @@ jobs:
         with:
           command: test
           json: true
-          args: --file=Examensarbete.csproj
+          args: --file=./Examensarbete.csproj
 
       # Results Check
-      - name: Check Snyk Results
-        if: always()
-        run: |
-          echo "# Snyk Security Findings" >> $GITHUB_STEP_SUMMARY
+      # - name: Check Snyk Results
+      #   if: always()
+      #   run: |
+      #     echo "# Snyk Security Findings" >> $GITHUB_STEP_SUMMARY
 
-          # Frontend Results
-          echo "## Frontend Scan" >> $GITHUB_STEP_SUMMARY
-          if [[ "${{ steps.snyk_frontend.outcome }}" == "failure" ]]; then
-            echo "⚠️ Vulnerabilities found in frontend dependencies" >> $GITHUB_STEP_SUMMARY
-            echo "${{ steps.snyk_frontend.outputs.snyk-test-output }}" >> $GITHUB_STEP_SUMMARY
-          else
-            echo "✅ No vulnerabilities found in frontend dependencies" >> $GITHUB_STEP_SUMMARY
-          fi
+      #     # Frontend Results
+      #     echo "## Frontend Scan" >> $GITHUB_STEP_SUMMARY
+      #     if [[ "${{ steps.snyk_frontend.outcome }}" == "failure" ]]; then
+      #       echo "⚠️ Vulnerabilities found in frontend dependencies" >> $GITHUB_STEP_SUMMARY
+      #       echo "${{ steps.snyk_frontend.outputs.snyk-test-output }}" >> $GITHUB_STEP_SUMMARY
+      #     else
+      #       echo "✅ No vulnerabilities found in frontend dependencies" >> $GITHUB_STEP_SUMMARY
+      #     fi
 
-          # Backend Results
-          echo "## Backend Scan" >> $GITHUB_STEP_SUMMARY
-          if [[ "${{ steps.snyk_backend.outcome }}" == "failure" ]]; then
-            echo "⚠️ Vulnerabilities found in backend dependencies" >> $GITHUB_STEP_SUMMARY
-            echo "${{ steps.snyk_backend.outputs.snyk-test-output }}" >> $GITHUB_STEP_SUMMARY
-          else
-            echo "✅ No vulnerabilities found in backend dependencies" >> $GITHUB_STEP_SUMMARY
-          fi
+      #     # Backend Results
+      #     echo "## Backend Scan" >> $GITHUB_STEP_SUMMARY
+      #     if [[ "${{ steps.snyk_backend.outcome }}" == "failure" ]]; then
+      #       echo "⚠️ Vulnerabilities found in backend dependencies" >> $GITHUB_STEP_SUMMARY
+      #       echo "${{ steps.snyk_backend.outputs.snyk-test-output }}" >> $GITHUB_STEP_SUMMARY
+      #     else
+      #       echo "✅ No vulnerabilities found in backend dependencies" >> $GITHUB_STEP_SUMMARY
+      #     fi
 
       - name: OWASP ZAP Baseline Scan
         id: zap_scan
