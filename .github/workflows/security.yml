@@ -32,17 +32,22 @@ jobs:
           dotnet build --configuration Release --no-restore
 
       # Security Scans
-      - name: Install Snyk CLI
-        run: npm install -g snyk
+      - name: Snyk Frontend Scan
+        id: snyk_frontend
+        uses: snyk/actions/node@master
+        continue-on-error: true
+        env:
+          SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
+        with:
+          command: test
+          json: true
+          args: --file=ex-arbete/package.json
 
-      - name: Run Snyk Scans
-        id: snyk_scan
+      - name: Snyk Backend Scan
+        id: snyk_backend
         run: |
-          # First monitor all projects
-          snyk monitor --all-projects
-
-          # Then test all projects
-          snyk test --all-projects --json > snyk-results.json || true
+          dotnet restore
+          snyk test --package-manager=nuget --json > snyk-backend-results.json || true
         continue-on-error: true
         env:
           SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
@@ -52,17 +57,27 @@ jobs:
         if: always()
         run: |
           echo "# Snyk Security Findings" >> $GITHUB_STEP_SUMMARY
-          echo "## Project Scan Results" >> $GITHUB_STEP_SUMMARY
 
-          if [ -f "snyk-results.json" ]; then
-            if grep -q "vulnerabilities" snyk-results.json; then
-              echo "⚠️ Vulnerabilities found in dependencies" >> $GITHUB_STEP_SUMMARY
-              cat snyk-results.json >> $GITHUB_STEP_SUMMARY
+          # Frontend Results
+          echo "## Frontend Scan" >> $GITHUB_STEP_SUMMARY
+          if [[ "${{ steps.snyk_frontend.outcome }}" == "failure" ]]; then
+            echo "⚠️ Vulnerabilities found in frontend dependencies" >> $GITHUB_STEP_SUMMARY
+            echo "${{ steps.snyk_frontend.outputs.snyk-test-output }}" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "✅ No vulnerabilities found in frontend dependencies" >> $GITHUB_STEP_SUMMARY
+          fi
+
+          # Backend Results
+          echo "## Backend Scan" >> $GITHUB_STEP_SUMMARY
+          if [ -f "snyk-backend-results.json" ]; then
+            if grep -q "vulnerabilities" snyk-backend-results.json; then
+              echo "⚠️ Vulnerabilities found in backend dependencies" >> $GITHUB_STEP_SUMMARY
+              cat snyk-backend-results.json >> $GITHUB_STEP_SUMMARY
             else
-              echo "✅ No vulnerabilities found" >> $GITHUB_STEP_SUMMARY
+              echo "✅ No vulnerabilities found in backend dependencies" >> $GITHUB_STEP_SUMMARY
             fi
           else
-            echo "❌ No scan results found" >> $GITHUB_STEP_SUMMARY
+            echo "❌ Backend scan results not found" >> $GITHUB_STEP_SUMMARY
           fi
 
       - name: OWASP ZAP Baseline Scan
