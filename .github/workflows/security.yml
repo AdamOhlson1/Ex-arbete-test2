@@ -112,18 +112,19 @@ jobs:
       #     fi
 
       - name: SonarCloud Scan
-        run: |
-          {
-            sonar-scanner \
-              -Dsonar.projectKey=AdamOhlson1_Ex-arbete-test2 \
-              -Dsonar.organization=adamohlson1 \
-              -Dsonar.host.url=https://sonarcloud.io \
-              -Dsonar.verbose=false \
-              -Dsonar.log.level=NONE
-          } > /dev/null 2>&1
+        uses: SonarSource/sonarqube-scan-action@v5.0.0
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+        with:
+          args: >
+            -Dsonar.projectKey=AdamOhlson1_Ex-arbete-test2
+            -Dsonar.organization=adamohlson1
+            -Dsonar.verbose=false
+            -Dsonar.log.level=NONE
+            -Dsonar.scanner.metadataFilePath=/dev/null
+            -Dsonar.scm.disabled=true
+            -Dsonar.scanner.dumpToFile=/dev/null
         continue-on-error: true
 
       - name: Upload Reports
