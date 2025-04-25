@@ -56,6 +56,7 @@ jobs:
         with:
           command: test
           json: true
+          args: --file=Examensarbete.csproj
 
       # Results Check
       # - name: Check Snyk Results
@@ -87,19 +88,27 @@ jobs:
         with:
           target: "https://www.example.com"
           allow_issue_writing: false
+          cmd_options: "-I" # Only show warnings and errors
         continue-on-error: true
 
       - name: Check ZAP Scan Results
         if: always()
         run: |
+          # Extract only the warning lines and format them nicely
           if [[ "${{ steps.zap_scan.outputs.alerts }}" == *"WARN-NEW:"* ]]; then
-            echo "::warning::⚠️ OWASP ZAP SECURITY WARNINGS FOUND ⚠️"
+            echo "::warning::🔒 OWASP ZAP Security Scan Results"
             echo "::warning::----------------------------------------"
+            # Extract and format only the essential warning information
             echo "${{ steps.zap_scan.outputs.alerts }}" | grep "WARN-NEW:" | while read -r line; do
-              echo "::warning::$line"
+              # Extract just the warning name and risk level
+              warning=$(echo "$line" | sed -E 's/WARN-NEW: \[([^]]+)\](.*)/\1/')
+              echo "::warning::⚠️ $warning"
             done
             echo "::warning::----------------------------------------"
-            echo "::warning::Total Warnings: $(echo "${{ steps.zap_scan.outputs.alerts }}" | grep -c "WARN-NEW:")"
+            total_warnings=$(echo "${{ steps.zap_scan.outputs.alerts }}" | grep -c "WARN-NEW:")
+            echo "::warning::📊 Total Security Warnings Found: $total_warnings"
+          else
+            echo "::notice::✅ No security warnings found in OWASP ZAP scan"
           fi
 
       - name: SonarCloud Scan
