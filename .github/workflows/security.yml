@@ -88,28 +88,28 @@ jobs:
         with:
           target: "https://www.example.com"
           allow_issue_writing: false
-          cmd_options: "-I" # Only show warnings and errors
+          cmd_options: "-s -T 60 -m 10 -j" # Silent mode, with JSON output
         continue-on-error: true
 
-      - name: Check ZAP Scan Results
-        if: always()
-        run: |
-          # Extract only the warning lines and format them nicely
-          if [[ "${{ steps.zap_scan.outputs.alerts }}" == *"WARN-NEW:"* ]]; then
-            echo "::warning::🔒 OWASP ZAP Security Scan Results"
-            echo "::warning::----------------------------------------"
-            # Extract and format only the essential warning information
-            echo "${{ steps.zap_scan.outputs.alerts }}" | grep "WARN-NEW:" | while read -r line; do
-              # Extract just the warning name and risk level
-              warning=$(echo "$line" | sed -E 's/WARN-NEW: \[([^]]+)\](.*)/\1/')
-              echo "::warning::⚠️ $warning"
-            done
-            echo "::warning::----------------------------------------"
-            total_warnings=$(echo "${{ steps.zap_scan.outputs.alerts }}" | grep -c "WARN-NEW:")
-            echo "::warning::📊 Total Security Warnings Found: $total_warnings"
-          else
-            echo "::notice::✅ No security warnings found in OWASP ZAP scan"
-          fi
+      # - name: Check ZAP Scan Results
+      #   if: always()
+      #   run: |
+      #     # Extract only the warning lines and format them nicely
+      #     if [[ "${{ steps.zap_scan.outputs.alerts }}" == *"WARN-NEW:"* ]]; then
+      #       echo "::warning::🔒 OWASP ZAP Security Scan Results"
+      #       echo "::warning::----------------------------------------"
+      #       # Extract and format only the essential warning information
+      #       echo "${{ steps.zap_scan.outputs.alerts }}" | grep "WARN-NEW:" | while read -r line; do
+      #         # Extract just the warning name and risk level
+      #         warning=$(echo "$line" | sed -E 's/WARN-NEW: \[([^]]+)\](.*)/\1/')
+      #         echo "::warning::⚠️ $warning"
+      #       done
+      #       echo "::warning::----------------------------------------"
+      #       total_warnings=$(echo "${{ steps.zap_scan.outputs.alerts }}" | grep -c "WARN-NEW:")
+      #       echo "::warning::📊 Total Security Warnings Found: $total_warnings"
+      #     else
+      #       echo "::notice::✅ No security warnings found in OWASP ZAP scan"
+      #     fi
 
       - name: SonarCloud Scan
         uses: SonarSource/sonarqube-scan-action@v5.0.0
@@ -120,6 +120,8 @@ jobs:
           args: >
             -Dsonar.projectKey=AdamOhlson1_Ex-arbete-test2
             -Dsonar.organization=adamohlson1
+            -Dsonar.verbose=false
+            -Dsonar.log.level=WARN
 
       - name: Upload Reports
         if: always()
