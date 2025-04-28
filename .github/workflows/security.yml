@@ -57,7 +57,6 @@ jobs:
         with:
           command: test
           json: true
-          args: --file=examensarbete.csproj
 
       # Results Check
       # - name: Check Snyk Results
