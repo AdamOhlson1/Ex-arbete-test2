@@ -30,7 +30,7 @@ jobs:
         run: |
           dotnet restore
           dotnet build --configuration Release --no-restore
-        working-directory: ./Examensarbete
+        working-directory: ./
 
       # Install Snyk CLI globally
       - name: Install Snyk CLI
